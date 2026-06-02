@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Landmark, Building, Calendar, Bell, Shield, Info, Key } from 'lucide-react';
+import { User, Landmark, Building, Calendar, Bell, Shield, Info, Key, Moon, Sun, Menu } from 'lucide-react';
 import { UserRole } from '../types';
 
 interface HeaderProps {
@@ -7,14 +7,47 @@ interface HeaderProps {
   setCurrentRole: (role: UserRole) => void;
   branch: string;
   setBranch: (branch: string) => void;
+  onMenuToggle?: () => void;
 }
 
-export default function Header({ currentRole, setCurrentRole, branch, setBranch }: HeaderProps) {
+export default function Header({ currentRole, setCurrentRole, branch, setBranch, onMenuToggle }: HeaderProps) {
   const [company, setCompany] = useState('Apollo Pharmaceuticals Pvt Ltd');
   const [financialYear, setFinancialYear] = useState('FY 2026-27');
   const [showNotification, setShowNotification] = useState(false);
   const [showApiKeySetting, setShowApiKeySetting] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('gemini_api_key_override') || '');
+
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('pharma_dark_mode');
+    if (saved === 'enabled') {
+      document.documentElement.classList.add('dark');
+      return true;
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('pharma_dark_mode');
+    if (saved === 'enabled') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      if (next) {
+        localStorage.setItem('pharma_dark_mode', 'enabled');
+        document.documentElement.classList.add('dark');
+      } else {
+        localStorage.setItem('pharma_dark_mode', 'disabled');
+        document.documentElement.classList.remove('dark');
+      }
+      return next;
+    });
+  };
 
   const roles: UserRole[] = [
     'Super Admin',
@@ -38,16 +71,25 @@ export default function Header({ currentRole, setCurrentRole, branch, setBranch 
   ];
 
   return (
-    <header className="h-16 bg-white border-b border-zinc-200/95 flex items-center justify-between px-6 z-10 flex-shrink-0 shadow-[0_1px_5px_rgba(0,0,0,0.02)]">
+    <header className="h-16 bg-white border-b border-zinc-200/95 flex items-center justify-between px-4 sm:px-6 z-10 flex-shrink-0 shadow-[0_1px_5px_rgba(0,0,0,0.02)]">
       {/* Current Enterprise Node Controls */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-6">
+        {/* Mobile Hamburger menu */}
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-1.5 text-zinc-600 hover:text-zinc-900 border border-zinc-200 rounded-xl bg-zinc-50 hover:bg-zinc-100 transition active:scale-95 shrink-0 cursor-pointer"
+          title="Toggle Navigation Menu"
+        >
+          <Menu className="h-4.5 w-4.5" />
+        </button>
+
         {/* Company Dropdown */}
-        <div className="flex items-center gap-2">
-          <Building className="h-4.5 w-4.5 text-indigo-500 drop-shadow-[0_0_6px_rgba(99,102,241,0.2)]" />
+        <div className="flex items-center gap-1.5">
+          <Building className="h-4 w-4 text-indigo-500 drop-shadow-[0_0_6px_rgba(99,102,241,0.2)]" />
           <select
             value={company}
             onChange={(e) => setCompany(e.target.value)}
-            className="text-sm font-bold text-zinc-800 bg-transparent border-none focus:outline-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition"
+            className="text-xs sm:text-sm font-bold text-zinc-800 bg-transparent border-none focus:outline-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition max-w-[110px] sm:max-w-none"
           >
             <option value="Apollo Pharmaceuticals Pvt Ltd">Apollo Pharma Ltd</option>
             <option value="Apothecary Retail Franchise Ltd">Apothecary Retail Franchise</option>
@@ -56,7 +98,7 @@ export default function Header({ currentRole, setCurrentRole, branch, setBranch 
         </div>
 
         {/* Branch Selector */}
-        <div className="flex items-center gap-2 border-l border-zinc-200 pl-6">
+        <div className="hidden md:flex items-center gap-2 border-l border-zinc-200 pl-6">
           <Landmark className="h-4.5 w-4.5 text-rose-500 drop-shadow-[0_0_6px_rgba(244,63,94,0.2)]" />
           <select
             value={branch}
@@ -70,7 +112,7 @@ export default function Header({ currentRole, setCurrentRole, branch, setBranch 
         </div>
 
         {/* Financial Year Selector */}
-        <div className="flex items-center gap-2 border-l border-zinc-200 pl-6">
+        <div className="hidden xl:flex items-center gap-2 border-l border-zinc-200 pl-6">
           <Calendar className="h-4.5 w-4.5 text-emerald-500 drop-shadow-[0_0_6px_rgba(16,185,129,0.2)]" />
           <select
             value={financialYear}
@@ -242,6 +284,25 @@ export default function Header({ currentRole, setCurrentRole, branch, setBranch 
             </div>
           )}
         </div>
+
+        {/* Persistent High-Contrast Late-Night Dark Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="p-2 text-zinc-500 hover:text-zinc-850 hover:bg-zinc-150/50 rounded-xl transition relative flex items-center justify-center border border-zinc-200 h-9 shrink-0 select-none cursor-pointer gap-1.5"
+          title={isDarkMode ? "Switch to Standard Day Shift Mode" : "Activate High-Contrast Late-Night Shift Mode"}
+        >
+          {isDarkMode ? (
+            <>
+              <Sun className="h-4.5 w-4.5 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+              <span className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider hidden md:inline-block">Day Shift</span>
+            </>
+          ) : (
+            <>
+              <Moon className="h-4.5 w-4.5 text-indigo-500 drop-shadow-[0_0_6px_rgba(99,102,241,0.5)]" />
+              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider hidden md:inline-block">Night Shift</span>
+            </>
+          )}
+        </button>
 
         {/* Staff Persona Badge */}
         <div className="flex items-center gap-2 border-l border-zinc-200 pl-4">

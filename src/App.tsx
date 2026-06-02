@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { UserRole } from './types';
+import { X } from 'lucide-react';
 
 // Concrete modules
 import DashboardModule from './components/modules/DashboardModule';
@@ -37,6 +38,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentRole, setCurrentRole] = useState<UserRole>('Super Admin');
   const [branch, setBranch] = useState('Main Branch (Retail POS)');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // RBAC Permission Map linking Roles to the 18 specific custom module IDs:
   const getAllowedModulesByRole = (role: UserRole): string[] => {
@@ -144,13 +146,49 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-100 font-sans">
-      {/* Sidebar Navigation */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        allowedModules={allowedModules}
-      />
+    <div className="flex h-screen overflow-hidden bg-zinc-100 font-sans dark:bg-stone-950">
+      {/* Sidebar Navigation - Desktop */}
+      <div className="hidden lg:flex h-full shrink-0">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          allowedModules={allowedModules}
+        />
+      </div>
+
+      {/* Sidebar Navigation - Mobile Slide-Over Drawer */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop overlay screen filter */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+          {/* Menu Drawer Content */}
+          <div className="relative flex flex-col w-80 max-w-[85vw] h-full bg-slate-950 text-slate-100 z-50 shadow-2xl animate-in slide-in-from-left duration-200">
+            <div className="absolute top-4 right-4 z-50">
+              <button 
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="p-1 px-2.5 text-zinc-300 hover:text-white rounded-lg bg-zinc-900 border border-zinc-85 *::shadow hover:bg-zinc-800 transition text-[11px] font-black flex items-center gap-1 cursor-pointer select-none"
+                title="Dismiss Menu Navigation"
+              >
+                <X className="h-4 w-4" />
+                <span>Close</span>
+              </button>
+            </div>
+            <div className="h-full overflow-hidden flex flex-col pt-4">
+              <Sidebar
+                activeTab={activeTab}
+                setActiveTab={(tab) => {
+                  setActiveTab(tab);
+                  setIsMobileSidebarOpen(false); // Clean automatic collapse
+                }}
+                allowedModules={allowedModules}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -160,6 +198,7 @@ export default function App() {
           setCurrentRole={setCurrentRole}
           branch={branch}
           setBranch={setBranch}
+          onMenuToggle={() => setIsMobileSidebarOpen(prev => !prev)}
         />
 
         {/* Selected Workspace Component */}

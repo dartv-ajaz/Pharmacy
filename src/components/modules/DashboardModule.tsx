@@ -3,7 +3,8 @@ import {
   BarChart3, RefreshCw, ShoppingBag, ShieldAlert, BookOpen, 
   ChevronRight, Sparkles, Database, Users, TrendingUp, Clock, 
   CheckCircle2, CloudLightning, Activity, Terminal, Play, 
-  FileCheck, ShieldCheck, Heart, ArrowRightLeft, DatabaseBackup, Info, Percent, ClipboardList
+  FileCheck, ShieldCheck, Heart, ArrowRightLeft, DatabaseBackup, Info, Percent, ClipboardList,
+  AlertCircle, BellRing, PackageCheck, Smartphone, QrCode, Copy, ExternalLink
 } from 'lucide-react';
 import { mockProducts, mockInvoices, mockBatches } from '../../data/mockData';
 import PharmacyIntelligenceDashboard from './PharmacyIntelligenceDashboard';
@@ -14,11 +15,83 @@ export default function DashboardModule({ setActiveTab }: { setActiveTab: (tab: 
   const [activeSyncing, setActiveSyncing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('All offline registers reconciled with Noida central instance.');
   
+  const [remoteUrl, setRemoteUrl] = useState('https://ai.studio/build');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRemoteUrl(window.location.href);
+    }
+  }, []);
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(remoteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
   // Marg simulation interactive states
   const [margActionResult, setMargActionResult] = useState<string>('Select any Marg Option above or press a quick tile to execute command.');
   const [simulatedQuery, setSimulatedQuery] = useState('');
   
   const [genericSaltAlternatives, setGenericSaltAlternatives] = useState<any[]>([]);
+
+  // Low Stock Calculator dynamically mapping active mockData
+  const [lowStockItems, setLowStockItems] = useState(() => {
+    return mockProducts.map(prod => {
+      const totalInStock = mockBatches
+        .filter(b => b.productId === prod.id)
+        .reduce((sum, b) => sum + b.stockQty, 0);
+      return {
+        ...prod,
+        totalStock: totalInStock,
+        isUnderMin: totalInStock < prod.minStockLevel
+      };
+    }).filter(p => p.isUnderMin);
+  });
+
+  const [operationalAlerts, setOperationalAlerts] = useState([
+    {
+      id: 'A1',
+      type: 'CRITICAL',
+      source: 'Cold Chain Vault',
+      message: 'Refrigerated vaccine storage spike recorded at +6.9°C (normal: 2.0-5.0°C). Re-verification needed.',
+      timestamp: '10 mins ago',
+      reconciled: false
+    },
+    {
+      id: 'A2',
+      type: 'COMPLIANCE',
+      source: 'Schedule X Locked safe',
+      message: 'Dual-authorized biometric key verification override successful for Alprax 0.5mg.',
+      timestamp: '42 mins ago',
+      reconciled: true
+    },
+    {
+      id: 'A3',
+      type: 'EXPIRY',
+      source: 'Batch CALP-X102',
+      message: 'Calpol 650mg is expiring within 60 days. Reorder or mark for immediate return.',
+      timestamp: '2 hours ago',
+      reconciled: false
+    },
+    {
+      id: 'A4',
+      type: 'AUDIT',
+      source: 'Terminal 03 Cash',
+      message: 'Counter discrepancy of -₹120 detected during cash drawer reconciliation.',
+      timestamp: '3 hours ago',
+      reconciled: false
+    }
+  ]);
+
+  const handleReconcileAlert = (id: string) => {
+    setOperationalAlerts(prev => prev.map(a => a.id === id ? { ...a, reconciled: true } : a));
+  };
+
+  const handleReorderProduct = (prodName: string) => {
+    alert(`[SCM PROCUREMENT INTEGRITY] Dynamic bulk PO request constructed for "${prodName}". Transmitted to manufacturer SCM systems.`);
+  };
 
   // Local sync timer trigger simulation
   const triggerPharmaSync = () => {
@@ -103,6 +176,205 @@ export default function DashboardModule({ setActiveTab }: { setActiveTab: (tab: 
             Modern Cloud Dashboard
           </button>
         </div>
+      </div>
+
+      {/* Dynamic 'Recent Alerts', 'Low Stock', and 'Mobile Companion' Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-shrink-0">
+        
+        {/* Recent Alerts Column */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <BellRing className="h-4.5 w-4.5 text-rose-500 animate-bounce" />
+                <h3 className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider">Dynamic Auditing & Compliance Alerts</h3>
+              </div>
+              <span className="text-[10px] font-mono bg-rose-50 border border-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">
+                {operationalAlerts.filter(a => !a.reconciled).length} Active Alerts
+              </span>
+            </div>
+
+            <div className="mt-3.5 space-y-2.5 max-h-[195px] overflow-y-auto pr-1">
+              {operationalAlerts.map(alert => (
+                <div 
+                  key={alert.id} 
+                  className={`p-3 rounded-xl border transition flex items-start gap-3 ${
+                    alert.reconciled 
+                      ? 'bg-zinc-50/70 border-zinc-200/50 opacity-60' 
+                      : alert.type === 'CRITICAL' 
+                        ? 'bg-rose-500/5 border-rose-200 text-rose-950'
+                        : alert.type === 'EXPIRY'
+                          ? 'bg-amber-500/5 border-amber-200 text-amber-950'
+                          : 'bg-indigo-500/5 border-indigo-200 text-indigo-950'
+                  }`}
+                >
+                  <ShieldAlert className={`h-4.5 w-4.5 mt-0.5 flex-shrink-0 ${
+                    alert.reconciled 
+                      ? 'text-zinc-450' 
+                      : alert.type === 'CRITICAL' 
+                        ? 'text-rose-600 animate-pulse' 
+                        : alert.type === 'EXPIRY' 
+                          ? 'text-amber-600' 
+                          : 'text-indigo-600'
+                  }`} />
+                  
+                  <div className="flex-grow space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase font-mono tracking-wider flex items-center gap-1.5">
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${alert.reconciled ? 'bg-zinc-400' : 'bg-rose-500'}`} />
+                        {alert.type} — {alert.source}
+                      </span>
+                      <span className="text-[8.5px] text-zinc-400 font-mono font-medium">{alert.timestamp}</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-zinc-700 font-bold">{alert.message}</p>
+                    
+                    {!alert.reconciled && (
+                      <div className="pt-1 select-none">
+                        <button 
+                          onClick={() => handleReconcileAlert(alert.id)}
+                          className="text-[9px] font-extrabold text-sky-700 hover:text-sky-850 flex items-center gap-1 bg-sky-500/5 border border-sky-100 px-2 py-0.5 rounded-md hover:bg-sky-500/10 transition cursor-pointer select-none"
+                        >
+                          <CheckCircle2 className="h-2.5 w-2.5" /> Mark Acknowledged & Reconciled
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="text-[9px] text-zinc-400 border-t border-zinc-100 pt-2 mt-2 font-mono flex items-center justify-between">
+            <span>SECURE INSTANCE: COMPLIANCE_MONITOR_DNG</span>
+            <span className="text-emerald-600 font-extrabold uppercase">Audit integrity verified</span>
+          </div>
+        </div>
+
+        {/* Low Stock Column */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <PackageCheck className="h-4.5 w-4.5 text-amber-500" />
+                <h3 className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider">Low Stock & Safety Buffer Thresholds</h3>
+              </div>
+              <span className="text-[10px] font-mono bg-amber-50 border border-amber-150 text-amber-800 px-2 py-0.5 rounded-full font-bold">
+                {lowStockItems.length} SKUs Low
+              </span>
+            </div>
+
+            <div className="mt-3.5 space-y-2.5 max-h-[195px] overflow-y-auto pr-1">
+              {lowStockItems.length === 0 ? (
+                <p className="text-[11px] text-zinc-400 italic">No inventory line is running below minimum stock buffers.</p>
+              ) : (
+                lowStockItems.map(p => (
+                  <div 
+                    key={p.id} 
+                    className="p-3 rounded-xl border border-zinc-200 bg-zinc-50/40 hover:bg-zinc-50 transition flex items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-zinc-800">{p.name}</span>
+                        <span className="text-[9px] tracking-wide font-mono bg-zinc-200/60 px-1.5 py-0.2 rounded font-bold text-zinc-500 uppercase">{p.category}</span>
+                      </div>
+                      <p className="text-[10px] text-zinc-400 leading-none">{p.salt}</p>
+                      <div className="flex items-center gap-3 text-[9px] font-mono mt-1 font-semibold text-zinc-500">
+                        <span>Current Stock: <strong className="text-rose-600">{p.totalStock}</strong> units</span>
+                        <span>Safety Min: <strong className="text-zinc-650">{p.minStockLevel}</strong></span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => handleReorderProduct(p.name)}
+                      className="flex items-center gap-1 text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg transition shrink-0 uppercase tracking-wider hover:shadow-sm"
+                    >
+                      <RefreshCw className="h-2.5 w-2.5 text-white mr-0.5" /> Reorder
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="text-[9px] text-zinc-400 border-t border-zinc-100 pt-2 mt-2 font-mono flex items-center justify-between">
+            <span>DISTRIBUTOR DECK STATUS: ACTIVE</span>
+            <span className="text-amber-600 font-extrabold uppercase">Replenishment links online</span>
+          </div>
+        </div>
+
+        {/* Mobile Companion Pairing Link Column */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Smartphone className="h-4.5 w-4.5 text-indigo-500 animate-pulse" />
+                <h3 className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider">Mobile Companion Link-Up</h3>
+              </div>
+              <span className="text-[10px] font-mono bg-indigo-50 border border-indigo-150 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold uppercase">
+                SCM Remote
+              </span>
+            </div>
+
+            <div className="mt-3.5 space-y-3.5 flex flex-col items-center">
+              <p className="text-[11px] leading-relaxed text-zinc-500 text-center">
+                Scan this dynamic QR code on your tablet or smartphone to instantly access this live developer workspace.
+              </p>
+
+              {/* QR Code Graphic Frame */}
+              <div className="relative group p-2 bg-zinc-50 border border-zinc-204 rounded-2xl flex flex-col items-center justify-center my-1 select-none cursor-pointer transition-all duration-300 hover:border-indigo-300 hover:bg-indigo-50/10 dark:hover:bg-zinc-800/20">
+                <div className="absolute top-1.5 right-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping absolute" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 absolute" />
+                </div>
+                
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=125x125&data=${encodeURIComponent(remoteUrl)}`}
+                  alt="Apothecary Live Link"
+                  className="w-32 h-32 object-contain bg-white p-1 rounded-xl border border-zinc-150 shadow-sm"
+                  referrerPolicy="no-referrer"
+                />
+                
+                <div className="mt-2 text-center">
+                  <span className="text-[8.5px] font-mono font-black text-zinc-400 uppercase tracking-widest leading-none block">
+                    Scan with Phone Camera
+                  </span>
+                </div>
+              </div>
+
+              {/* Connection Status & Copy Tool */}
+              <div className="w-full space-y-2">
+                <div className="flex items-center gap-1 bg-zinc-50 p-1.5 rounded-xl border border-zinc-200 text-left overflow-hidden">
+                  <span className="text-[8px] font-mono font-black text-zinc-400 select-none uppercase shrink-0">PORT:</span>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={remoteUrl} 
+                    className="flex-1 bg-transparent border-none text-[9.5px] font-mono text-zinc-650 p-0 focus:ring-0 leading-none truncate select-all focus:outline-none"
+                  />
+                  <button 
+                    onClick={handleCopyUrl}
+                    className="p-1 hover:bg-zinc-150 rounded-lg text-zinc-500 hover:text-zinc-800 transition active:scale-90 shrink-0 cursor-pointer"
+                    title="Copy Workspace URL"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {copied && (
+                  <p className="text-[10px] text-emerald-600 font-extrabold text-center leading-none animate-bounce">
+                    ✓ Direct Developer Link Copied!
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[9px] text-zinc-400 border-t border-zinc-100 pt-2 mt-2 font-mono flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Responsive UI Ready
+            </span>
+            <span className="text-indigo-600 font-extrabold uppercase">Device sync handshakes open</span>
+          </div>
+        </div>
+
       </div>
 
       {/* RENDER DYNAMIC DASHBOARD MODE */}

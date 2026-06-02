@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, DollarSign, Calendar, ChevronRight, PieChart, Activity, Sparkles } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Calendar, ChevronRight, PieChart, Activity, Sparkles, Download } from 'lucide-react';
 import { mockInvoices, mockProducts, mockBatches } from '../../data/mockData';
 
 export default function AnalyticsModule() {
@@ -29,6 +29,42 @@ export default function AnalyticsModule() {
 
   const maxVal = Math.max(...revenueByMonthData.map(d => d.value));
 
+  const handleExportAnalyticsCSV = () => {
+    const csvLines = [
+      "Enterprise Sales Analytics BI Informatics Report",
+      `Report Generated: ${new Date().toISOString().split('T')[0]}`,
+      "",
+      "--- KPI SCORECARD SUMMARY ---",
+      "KPI Metric,Value,Status/Growth",
+      "YTD Gross Revenue,INR 3722000.00,+14.2% YoY growth",
+      `June Billing Volume,INR 842000.00,Reconciled 5 registers`,
+      `Active SKU Coverage,${totalSkuLines} Drugs,Across OTC & Sch-H`,
+      `Near Expiry Risk Liabilities,${nearExpiryCount} Batches,Expiring under 90 days`,
+      "",
+      "--- ROLLING H1 REVENUE ---",
+      "Month,Revenue (INR)",
+      ...revenueByMonthData.map(d => `${d.label},${d.value}`),
+      "",
+      "--- DRUG SALES CATEGORY RATIO ---",
+      "Category,Share Percentage",
+      "Schedule H (Rx Critical),45%",
+      "OTC (Over the Counter),30%",
+      "Schedule X (Narcotics),10%",
+      "General & Dietary,15%"
+    ];
+
+    const csvContent = csvLines.join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "sales_analytics_bi_summary.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex flex-col h-full bg-zinc-50 overflow-y-auto">
       {/* Banner */}
@@ -41,23 +77,34 @@ export default function AnalyticsModule() {
           <p className="text-[11px] text-zinc-500 mt-0.5">Real-time SCM aging matrixes, category sales distributions, and custom D3-style SVG visual indicators.</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex bg-zinc-100 p-1.5 rounded-lg border border-zinc-200 shrink-0">
+        {/* Filters & Export */}
+        <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+          <div className="flex bg-zinc-100 p-1.5 rounded-lg border border-zinc-200">
+            <button
+              onClick={() => setActiveDateRange('30days')}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                activeDateRange === '30days' ? 'bg-white shadow text-zinc-900' : 'text-zinc-500 hover:text-zinc-800'
+              }`}
+            >
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => setActiveDateRange('1y')}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                activeDateRange === '1y' ? 'bg-white shadow text-zinc-900' : 'text-zinc-500 hover:text-zinc-800'
+              }`}
+            >
+              Year-to-Date
+            </button>
+          </div>
+
           <button
-            onClick={() => setActiveDateRange('30days')}
-            className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${
-              activeDateRange === '30days' ? 'bg-white shadow text-zinc-900' : 'text-zinc-500 hover:text-zinc-800'
-            }`}
+            onClick={handleExportAnalyticsCSV}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer"
+            title="Download sales performance matrices as CSV spreadsheet for management auditing"
           >
-            Last 30 Days
-          </button>
-          <button
-            onClick={() => setActiveDateRange('1y')}
-            className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${
-              activeDateRange === '1y' ? 'bg-white shadow text-zinc-900' : 'text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            Year-to-Date
+            <Download className="h-4 w-4" />
+            <span>Export Analytics CSV</span>
           </button>
         </div>
       </div>

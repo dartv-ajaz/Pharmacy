@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { 
   RefreshCw, Cloud, Database, Network, ChevronRight, Search, 
-  HelpCircle, ShieldCheck, Play, Plus, Activity, Clock 
+  HelpCircle, ShieldCheck, Play, Plus, Activity, Clock, CheckCircle, X 
 } from 'lucide-react';
+
+interface ToastMessage {
+  id: string;
+  title: string;
+  message: string;
+  type: 'success' | 'info' | 'error';
+}
 
 export default function CloudSyncModule() {
   const [activeSubTab, setActiveSubTab] = useState<'nodes' | 'jobs'>('nodes');
@@ -20,6 +27,19 @@ export default function CloudSyncModule() {
   ]);
 
   const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const addToast = (title: string, message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    const id = Math.random().toString();
+    setToasts(prev => [...prev, { id, title, message, type }]);
+    setTimeout(() => {
+      removeToast(id);
+    }, 4500);
+  };
 
   const triggerSyncAll = async () => {
     setIsSyncingAll(true);
@@ -30,6 +50,11 @@ export default function CloudSyncModule() {
       state: n.state === 'LAGGING' ? 'ONLINE' : n.state
     })));
     setIsSyncingAll(false);
+    addToast(
+      'Cloud Synchronization Succeeded',
+      'Unified enterprise masters pricing matrices and satellite POS registers successfully updated with central depository checks.',
+      'success'
+    );
   };
 
   return (
@@ -139,6 +164,34 @@ export default function CloudSyncModule() {
           </div>
         )}
       </div>
+
+      {/* Floating Toast Notification Centre */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full">
+          {toasts.map(t => (
+            <div 
+              key={t.id}
+              className="bg-zinc-900 border border-zinc-800 text-white shadow-2xl rounded-2xl p-4 flex gap-3.5 items-start animate-bounce-short relative overflow-hidden"
+            >
+              <div className="h-5 w-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                <CheckCircle className="h-4 w-4" />
+              </div>
+              <div className="flex-1 text-left space-y-0.5">
+                <h4 className="font-extrabold text-xs text-emerald-400 tracking-wide uppercase">{t.title}</h4>
+                <p className="text-[11px] text-zinc-300 leading-normal font-semibold">{t.message}</p>
+                <span className="text-[8.5px] font-mono text-zinc-500 uppercase block pt-0.5">TERMINAL_REF: SCM_CLOUD_OK</span>
+              </div>
+              <button 
+                onClick={() => removeToast(t.id)}
+                className="text-zinc-500 hover:text-zinc-200 transition p-0.5 rounded-lg"
+                title="Dismiss Alert"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

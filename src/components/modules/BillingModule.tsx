@@ -501,6 +501,23 @@ export default function BillingModule({ branch }: BillingModuleProps) {
                 <p className="font-semibold text-emerald-700">TENDER: {showInvoicedReceipt.paymentMode} - FULLY PAID (AUTH_OK)</p>
               </div>
 
+              {/* QR Payment Generator */}
+              <div className="flex flex-col items-center justify-center p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-2 my-2 select-none">
+                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider text-center">Scan QR for instant M-POS UPI Payment</p>
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(
+                    `upi://pay?pa=apollopharma@okaxis&pn=Apollo%20Pharma&tr=${showInvoicedReceipt.invoiceNumber}&am=${showInvoicedReceipt.totals.grandTotal.toFixed(2)}&cu=INR`
+                  )}`}
+                  alt="POS Payment QR"
+                  className="w-24 h-24 object-contain border border-zinc-200 p-1.5 rounded-lg bg-white"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="text-center">
+                  <p className="text-[10px] font-bold text-zinc-805">Payable Amount: ₹{showInvoicedReceipt.totals.grandTotal.toFixed(2)}</p>
+                  <p className="text-[8px] font-mono text-zinc-450">UPI REF: {showInvoicedReceipt.invoiceNumber}</p>
+                </div>
+              </div>
+
               {/* Regulatory Footer */}
               <div className="text-center border-t border-dashed border-zinc-300 pt-3 text-[10px] text-zinc-400 space-y-0.5">
                 <p>Schedule H Warnings: Stamped dispensing required.</p>
@@ -511,17 +528,11 @@ export default function BillingModule({ branch }: BillingModuleProps) {
             <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex justify-end gap-2.5">
               <button
                 onClick={() => {
-                  const printContent = document.querySelector('.bg-amber-50\\/20')?.innerHTML || '';
-                  const printWin = window.open('', '', 'width=400,height=600');
-                  if (printWin) {
-                    printWin.document.write(`<html><body style="font-family:monospace;padding:20px;">${printContent}</body></html>`);
-                    printWin.print();
-                    printWin.close();
-                  }
+                  window.print();
                 }}
-                className="px-4 py-2 text-xs font-semibold bg-zinc-800 text-white rounded-xl hover:bg-black transition flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-black bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition flex items-center gap-1.5 shadow-md shadow-rose-100 cursor-pointer"
               >
-                <Printer className="h-3.5 w-3.5" /> Send to POS Device
+                <Printer className="h-3.5 w-3.5" /> Print A4 Invoice
               </button>
               <button
                 onClick={() => {
@@ -533,11 +544,190 @@ export default function BillingModule({ branch }: BillingModuleProps) {
                   link.download = `${showInvoicedReceipt.invoiceNumber}.txt`;
                   link.click();
                 }}
-                className="px-4 py-2 text-xs font-semibold bg-zinc-200 text-zinc-700 hover:bg-zinc-300 rounded-xl transition"
+                className="px-4 py-2 text-xs font-semibold bg-zinc-200 text-zinc-700 hover:bg-zinc-300 rounded-xl transition cursor-pointer"
               >
                 Download Receipt Text
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROFESSIONAL A4 PHARMACY TAX INVOICE - PRINT ONLY */}
+      {showInvoicedReceipt && (
+        <div className="print-only-container hidden print:block bg-white text-black p-10 font-mono text-xs border border-zinc-400 select-all">
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+              .print-only-container, .print-only-container * {
+                visibility: visible !important;
+              }
+              .print-only-container {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 10mm !important;
+                margin: 0 !important;
+                background: white !important;
+                color: black !important;
+                font-family: monospace !important;
+              }
+              .invoice-row {
+                page-break-inside: avoid !important;
+              }
+            }
+          `}</style>
+
+          <div className="border border-black p-6 space-y-6">
+            
+            {/* Header / Pharmacy Identity */}
+            <div className="flex justify-between items-start border-b border-black pb-4">
+              <div className="space-y-1">
+                <h1 className="text-base font-bold uppercase">APOTHECARY ENTERPRISE PHARMACY</h1>
+                <p className="text-[10px] font-semibold text-zinc-650">A Unit of Apollo Pharmaceuticals Pvt Ltd</p>
+                <p className="text-[10px]">Registered Licensed Druggist (DL No: DL-SCM-39202/26, 21B-39203)</p>
+                <p className="text-[10px]">GSTIN: 09AABCM3928L1Z9 (Taxable Intra-state Supplies)</p>
+                <p className="text-[10px]">Address: Sector 63 Logistics Hub, Noida, Uttar Pradesh 201301</p>
+              </div>
+              <div className="text-right space-y-1">
+                <span className="inline-block border border-black px-2.5 py-1 text-[10px] font-black uppercase">
+                  ORIGINAL TAX INVOICE
+                </span>
+                <p className="text-[10px] font-bold">Counter Code: POS-01</p>
+                <p className="text-[10px] text-zinc-550">Ph: +91-120-4923051</p>
+              </div>
+            </div>
+
+            {/* Invoice Meta Grid */}
+            <div className="grid grid-cols-2 gap-6 border-b border-black pb-4 text-[10px]">
+              <div className="space-y-2">
+                <p className="uppercase tracking-wider font-extrabold pb-1 border-b border-dashed border-zinc-300">Bill Metadata</p>
+                <p><strong>INVOICE NO :</strong> {showInvoicedReceipt.invoiceNumber}</p>
+                <p><strong>DATE & TIME :</strong> {showInvoicedReceipt.date} 03:55 UTC</p>
+                <p><strong>STATE OF SUPPLY :</strong> Uttar Pradesh (Code 09)</p>
+                <p><strong>REFERRED BY :</strong> Dr. Self-Medication Practitioner</p>
+              </div>
+              <div className="space-y-2">
+                <p className="uppercase tracking-wider font-extrabold pb-1 border-b border-dashed border-zinc-350">Patient Demographics</p>
+                <p><strong>PATIENT NAME :</strong> {showInvoicedReceipt.customerName}</p>
+                <p><strong>CONTACT PHONE :</strong> +91 {showInvoicedReceipt.customerPhone}</p>
+                <p><strong>PAYMENT TENDER :</strong> {showInvoicedReceipt.paymentMode} (FULLY PAID)</p>
+                <p><strong>SCM BRANCH :</strong> {branch.split(' (')[0]}</p>
+              </div>
+            </div>
+
+            {/* Items Grid */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2">Itemized Biological Dispensation Records</p>
+              <table className="w-full text-left border-collapse border border-black text-[10px]">
+                <thead>
+                  <tr className="bg-zinc-100 border-b border-black font-bold uppercase">
+                    <th className="border-r border-black p-1.5 text-center w-8">#</th>
+                    <th className="border-r border-black p-1.5">DRUG / CHEMICAL SPECIFICATION</th>
+                    <th className="border-r border-black p-1.5 text-center w-20 font-bold">BATCH</th>
+                    <th className="border-r border-black p-1.5 text-center w-24">EXPIRY</th>
+                    <th className="border-r border-black p-1.5 text-center w-12 font-bold">QTY</th>
+                    <th className="border-r border-black p-1.5 text-right w-20 font-bold">MRP (₹)</th>
+                    <th className="border-r border-black p-1.5 text-center w-12">GST %</th>
+                    <th className="p-1.5 text-right w-24 font-bold">TOTAL (₹)</th>
+                    <th className="p-1.5 text-right w-24">CGST / SGST</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {showInvoicedReceipt.items.map((it: any, idx: number) => {
+                    const basePrice = it.mrp / (1 + (it.gstRate || 12) / 100);
+                    const gstVal = it.total - (it.qty * basePrice);
+                    return (
+                      <tr key={idx} className="border-b border-black font-mono invoice-row">
+                        <td className="border-r border-black p-1.5 text-center">{idx + 1}</td>
+                        <td className="border-r border-black p-1.5">
+                          <p className="font-bold">{it.productName}</p>
+                          <p className="text-[8.5px] text-zinc-500 font-medium italic">{it.salt}</p>
+                        </td>
+                        <td className="border-r border-black p-1.5 text-center font-bold">{it.batchNumber}</td>
+                        <td className="border-r border-black p-1.5 text-center">{it.expiryDate}</td>
+                        <td className="border-r border-black p-1.5 text-center font-bold">{it.qty}</td>
+                        <td className="border-r border-black p-1.5 text-right">₹{it.mrp.toFixed(2)}</td>
+                        <td className="border-r border-black p-1.5 text-center">{it.gstRate || 12}%</td>
+                        <td className="border-r border-black p-1.5 text-right font-black font-bold">₹{it.total.toFixed(2)}</td>
+                        <td className="p-1.5 text-right font-bold text-[8px]">
+                          ₹{(gstVal / 2).toFixed(2)} / ₹{(gstVal / 2).toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Calculations & Statutory Warnings */}
+            <div className="grid grid-cols-12 gap-6 pt-2 font-mono items-stretch">
+              {/* Warnings and compliance declaration */}
+              <div className="col-span-4 space-y-2 border border-black p-3 text-[8px] leading-snug">
+                <p className="font-bold underline text-[8.5px] uppercase">Regulatory Declaration:</p>
+                <p>1. <strong>Schedule H Warning:</strong> Sold by retail on Doctor prescription only.</p>
+                <p>2. Keep biological medicines stored below 25°C. Non-returnable.</p>
+                <p>3. Warranted under Sec 18 of Drugs & Cosmetics Act 1940.</p>
+              </div>
+
+              {/* QR Code payment dispatch */}
+              <div className="col-span-3 border border-black p-2 flex flex-col items-center justify-center text-center space-y-1">
+                <p className="text-[7.5px] font-bold uppercase tracking-wider">M-POS BharatQR / UPI</p>
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(
+                    `upi://pay?pa=apollopharma@okaxis&pn=Apollo%20Pharma&tr=${showInvoicedReceipt.invoiceNumber}&am=${showInvoicedReceipt.totals.grandTotal.toFixed(2)}&cu=INR`
+                  )}`}
+                  alt="Invoice UPI QR"
+                  className="w-16 h-16 object-contain mx-auto"
+                  referrerPolicy="no-referrer"
+                />
+                <p className="text-[7.5px] font-mono leading-none">SCAN TO SETTLE</p>
+              </div>
+
+              {/* Totals & GST Pool Splits */}
+              <div className="col-span-5 border border-black p-3 space-y-1.5 text-[9.5px]">
+                <div className="flex justify-between">
+                  <span>Gross Valuation:</span>
+                  <span>₹{(showInvoicedReceipt.totals.subtotal).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-b border-dashed border-zinc-400 pb-1">
+                  <span>Discounts Applied:</span>
+                  <span className="text-rose-600">-₹{(showInvoicedReceipt.totals.discount || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>CGST Pool Split (6% Category):</span>
+                  <span>+₹{(showInvoicedReceipt.totals.cgst).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-b border-black pb-1">
+                  <span>SGST Pool Split (6% Category):</span>
+                  <span>+₹{(showInvoicedReceipt.totals.sgst).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-black text-xs pt-1">
+                  <span className="uppercase">NET INVOICE TOTAL:</span>
+                  <span>INR {showInvoicedReceipt.totals.grandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Signature Area */}
+            <div className="flex justify-between items-end pt-8 text-[10px] font-mono">
+              <div>
+                <p className="font-semibold italic">Reconciled & audited by system terminal</p>
+                <div className="border-t border-black w-40 mt-6 pt-1 text-center font-bold">
+                  Patient's Acknowledgment
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold uppercase tracking-wider text-zinc-650">For APOTHECARY ENERPTERISE PHARMACY</p>
+                <div className="border-t border-black w-56 mt-12 pt-1 text-center font-bold">
+                  Registered Pharmacist (Auth Signatory)
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

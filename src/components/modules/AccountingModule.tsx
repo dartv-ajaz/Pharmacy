@@ -83,6 +83,46 @@ export default function AccountingModule() {
   const expenseTotal = ledgers.filter(l => l.group === 'Expenses').reduce((acc, curr) => acc + curr.balance, 0);
   const netEarnings = revenueTotal - expenseTotal;
 
+  const handleExportCSV = () => {
+    let csvContent = "";
+    let fileName = "";
+
+    if (activeSubTab === 'voucher') {
+      const headers = ["Voucher No", "Date", "Voucher Type", "Narration", "Debited Account", "Credited Account", "Amount (INR)"];
+      const rows = vouchersHistory.map(v => [
+        v.voucherNo,
+        v.date,
+        v.voucherType,
+        `"${v.narration?.replace(/"/g, '""') || ''}"`,
+        `"${v.debitedAccount}"`,
+        `"${v.creditedAccount}"`,
+        v.amount
+      ]);
+      csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      fileName = "accounting_vouchers_history.csv";
+    } else {
+      const headers = ["Ledger ID", "Ledger Name", "Account Group", "Balance (INR)"];
+      const rows = ledgers.map(l => [
+        l.id,
+        `"${l.name}"`,
+        l.group,
+        l.balance
+      ]);
+      csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      fileName = "accounting_trial_balance.csv";
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex-1 p-6 bg-zinc-50 flex flex-col overflow-hidden h-full">
       {/* Title */}
@@ -91,6 +131,14 @@ export default function AccountingModule() {
           <h2 className="text-base font-bold text-zinc-800">Double-Entry Financial Accounting Ledger</h2>
           <p className="text-xs text-zinc-500">Real-time book reconciliations, tax ledgers, and standard dual-entry audits</p>
         </div>
+        <button
+          onClick={handleExportCSV}
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition shadow-sm active:scale-95"
+          title="Download current financial ledger selection as CSV spreadsheet"
+        >
+          <Download className="h-4 w-4" />
+          <span>Export {activeSubTab === 'voucher' ? "Vouchers" : "Ledgers"} CSV</span>
+        </button>
       </div>
 
       {/* Tabs */}
