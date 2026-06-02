@@ -1,0 +1,6 @@
+{
+  "name": "Enterprise Pharmacy ERP",
+  "description": "Enterprise-grade cloud Pharmacy Management & Distribution ERP Platform with 21 modules including multi-role RBAC, billing, inventory aging, GST, CRM, hospital integration, and Gemini-powered smart workflows.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
